@@ -11,6 +11,7 @@ from exceptions import (
     AccountNotFoundError,
     UnauthorizedAccessError,
 )
+import user
 from utils import format_currency, generate_report, load_transactions_from_file
 
 def wait_for_enter():
@@ -54,27 +55,31 @@ def view_all_accounts(user):
     print("\n" + "-" * 50)
     print("All Accounts")
     print("-" * 50)
+
     for summary in summaries:
+        # print(summary)
         account = user.get_account(summary.account_id)
         print(f"ID: {summary.account_id}")
         print(f"  Type: {summary.account_type}")
         print(f"  Balance: {format_currency(summary.balance)}")
         print(f"  Transactions: {summary.total_transactions}")
-        if summary.account_type == "Loan" and hasattr(account, "loan_summary"):
-            loan_info = account.loan_summary()
-            print(f"  Principal: {format_currency(loan_info['principal'])}")
-            print(f"  EMI: {format_currency(loan_info['emi'])}")
-            print(f"  Months Remaining: {loan_info['months_remaining']}")
+        if summary.account_type == "Loan":
+            print(f"  Principal: {format_currency(summary.principal)}")
+            print(f"  EMI: {format_currency(summary.emi)}")
+            print(f"  Months Remaining: {summary.months_remaining}")
+            print(f"  Total Remaining: {format_currency(summary.total_remaining)}")
         print()
-    input("Press Enter to continue...")
 
 @clear_wait
-def deposit_to_account(user):
+def deposit_to_account(user:User):
     try:
-        account_id = input("Enter account ID: ").strip()
+        account_id = int(input("Enter account ID: ").strip())
         amount = float(input("Enter amount to deposit: "))
 
         account = user.get_account(account_id)
+        if isinstance(account, LoanAccount):
+            print("Error: Cannot deposit to a Loan Account.")
+            return
         account.deposit(amount)
         print(
             f"Successfully deposited {format_currency(amount)} to account {account_id}"
@@ -88,28 +93,30 @@ def deposit_to_account(user):
         print(f"Unexpected error: {e}")
 
 @clear_wait
-def withdraw_from_account(user):
+def withdraw_from_account(user:User):
     try:
-        account_id = input("Enter account ID: ").strip()
+        account_id = int(input("Enter account ID: ").strip())
         amount = float(input("Enter amount to withdraw: "))
 
         account = user.get_account(account_id)
         account.withdraw(amount)
         print(
-            f"Successfully withdrew {format_currency(amount)} from account {account_id}"
+            f"\nSuccessfully withdrew {format_currency(amount)} from account {account_id}"
         )
-        print(f"New balance: {format_currency(account.balance)}")
+        print(f"\nNew balance: {format_currency(account.balance)}")
     except ValueError:
         print("Error: Invalid input. Please enter a valid amount.")
+    except InsufficientFundsError as e:
+        print(f"Error: {e}")
     except FinanceException as e:
         print(f"Error: {e}")
     except Exception as e:
         print(f"Unexpected error: {e}")
 
 @clear_wait
-def view_statement(user):
+def view_statement(user:User):
     try:
-        account_id = input("Enter account ID: ").strip()
+        account_id = int(input("Enter account ID: ").strip())
         month_input = input(
             "Enter month (1-12) or press Enter to see all transactions: "
         ).strip()
@@ -128,10 +135,15 @@ def view_statement(user):
             return
 
         print("\n" + "-" * 50)
-        print(f"Statement for {account_id} (Month: {month if month else 'All'})")
-        print("-" * 50)
+        print(f"Statement for account no : {account_id} (Month: {month if month else 'All'})")
         for txn in transactions:
-            print(f"  {txn}")
+            print("-" * 50)
+            txn = txn.to_dict()
+            print(f"  id : {txn['id']}")
+            print(f"  amount : {txn['amount']}")
+            print(f"  type : {txn['type']}")
+            print(f"  description : {txn['description']}")
+            print(f"  tags : {txn['tags']}")
         print("-" * 50)
         print(f"Total Transactions: {len(transactions)}")
     except ValueError:
@@ -142,17 +154,16 @@ def view_statement(user):
         print(f"Unexpected error: {e}")
 
 @clear_wait
-def apply_monthly_updates(user):
+def apply_monthly_updates(user:User):
     print("\nApplying monthly updates to all accounts...")
+    # user.apply_all_monthly_updates()
     errors = user.apply_all_monthly_updates()
-
     if errors:
         print(f"Completed with {len(errors)} error(s):")
         for error in errors:
             print(f"  - {error}")
     else:
         print("All monthly updates applied successfully!")
-
     # Show updated balances
     print("\nUpdated Account Balances:")
     for summary in user.get_all_summaries():
@@ -160,108 +171,186 @@ def apply_monthly_updates(user):
         print(f"  {summary.account_id}: {format_currency(account.balance)}")
 
 @clear_wait
-def view_financial_report(user):
-    report = generate_report(user)
+def view_financial_report(user:User):
+    try:
+        report = generate_report(user)
 
-    print("\n" + "=" * 50)
-    print("Financial Report")
-    print("=" * 50)
-    print(f"User: {report['user']['name']} ({report['user']['user_id']})")
-    print(f"Email: {report['user']['email']}")
-    print()
-    print(f"Total Balance: {format_currency(report['total_balance'])}")
-    print(f"Net Worth: {format_currency(report['net_worth'])}")
-    print()
-    print("-" * 50)
-    print("Account Summaries:")
-    print("-" * 50)
-    for summary in report["account_summaries"]:
-        print(
-            f"  {summary['account_id']} ({summary['account_type']}): {format_currency(summary['balance'])}"
-        )
+        print("\n" + "=" * 50)
+        print("Financial Report")
+        print("=" * 50)
+        print(f"User: {report['user']['name']} ({report['user']['user_id']})")
+        print(f"Email: {report['user']['email']}")
+        print()
+        print(f"Total Balance: {format_currency(report['total_balance'])}")
+        print(f"Net Worth: {format_currency(report['net_worth'])}")
+        print()
+        print("-" * 50)
+        print("Account Summaries:")
+        print("-" * 50)
+        
+        if report.get("account_summaries"):
+            for summary in report["account_summaries"]:
+                print(
+                    f"  {summary.account_id} ({summary.account_type}): {format_currency(summary.balance)}"
+                )
+        else:
+            print("  No accounts found.")
 
-    print()
-    print("-" * 50)
-    print("Top 5 Transactions by Amount:")
-    print("-" * 50)
-    for i, txn in enumerate(report["top_5_transactions"], 1):
-        print(
-            f"  {i}. {txn['description']}: {format_currency(txn['amount'])} ({txn['type']})"
-        )
+        print()
+        print("-" * 50)
+        print("Top 5 Transactions by Amount:")
+        print("-" * 50)
+        
+        if report.get("top_5_transactions") and len(report["top_5_transactions"]) > 0:
+            for i, txn in enumerate(report["top_5_transactions"], 1):
+                print(
+                    f"  {i}. {txn.get('description', 'N/A')}: {format_currency(txn.get('amount', 0))} ({txn.get('type', 'N/A')})"
+                )
+        else:
+            print("  No transactions found.")
+            
+    except KeyError as e:
+        print(f"Error: Missing data in report - {e}")
+        print("Please ensure all accounts have transactions.")
+    except TypeError as e:
+        print(f"Error: Data format issue - {e}")
+    except Exception as e:
+        print(f"Unexpected error generating report: {e}")
 
 
-def main():
-    # Create demo user and accounts
+@clear_wait
+def setup_user():
+
+    global user
+
     print("Let's set up your account!\n")
     name = input("Enter your name: ").strip()
     email = input("Enter your email: ").strip()
     user = User("U001", name, email)
 
-    print(f"\nWelcome, {user.name}! Your user ID is {user.user_id}. Let's create some accounts for you.")
+    print(
+        f"\nWelcome, {user.name}! Your user ID is {user.user_id}. Let's create some accounts for you."
+    )
 
     print("\nCreating accounts...")
 
     savingsamount = float(input("Enter initial balance for Savings Account: ").strip())
     currentamount = float(input("Enter initial balance for Current Account: ").strip())
 
-    loadamount = float(input("Enter principal amount for Loan Account: ").strip())
-    loanmonths = int(input("Enter remaining months for Loan Account: ").strip())
+    global savings
+    global current
 
-    savings = SavingsAccount(
-        user.user_id,savingsamount
-    )
-    current = CurrentAccount(
-        user.user_id,balance=currentamount
-    )
-    loan = LoanAccount(
-        user.user_id, principal=loadamount, remaining_months=loanmonths
-    )
+    savings = SavingsAccount(user.user_id, savingsamount)
+    current = CurrentAccount(user.user_id, balance=currentamount)
 
     user.add_account(savings)
     user.add_account(current)
-    user.add_account(loan)
 
-    print("Accounts created successfully!\n")
-    print(f"your saving account number is \t{savings.account_id}")
-    print(f"your current account number is \t{current.account_id}")
-    print(f"your loan account number is \t{loan.account_id}\n")
-    
+    loan_choice = input("\nDo you want to set up a loan account? (y/n): ").strip().lower()
+    if loan_choice == "y" or loan_choice == "Y":
+        print("\nSetting up loan account...")
+
+
+        loadamount = float(input("Enter principal amount for Loan Account: ").strip())
+        loanmonths = int(input("Enter remaining months for Loan Account: ").strip())
+
+        linkedBankAccount = None
+        while not linkedBankAccount:
+            try:
+                print("\nAll accounts:")
+                for account in user.get_all_accounts():
+                    print(
+                        f"  Account ID: {account.account_id}, Type: {type(account).__name__}, Balance: {format_currency(account.balance)}"
+                    )
+                print()
+                emi_account_choice = int(
+                    input(
+                        "Which account would you like to use for EMI deductions? (enter account number): "
+                    ).strip()
+                )
+                emi_account = user.get_account(
+                    emi_account_choice
+                )  # validates ID exists
+
+                if isinstance(emi_account, LoanAccount):
+                    print(
+                        "Loan account cannot be used for EMI deduction. Choose Savings/Current."
+                    )
+                    continue
+
+                linkedBankAccount = emi_account
+                break
+            except ValueError:
+                print("Please enter a valid numeric account number.")
+            except AccountNotFoundError:
+                print("Invalid account number. Try again.")
+
+        loan = LoanAccount(
+            user.user_id,
+            principal=loadamount,
+            remaining_months=loanmonths,
+            linkedBankAccount=emi_account,
+        )
+        user.add_account(loan)
+
+    print("\nAll Accounts created successfully!\n")
     # Display all accounts
     print("All accounts:")
     for account in user.get_all_accounts():
-        print(f"  Account ID: {account.account_id}, Type: {type(account).__name__}, Balance: {account.balance}")
-    
-    wait_for_enter()
+        print(
+            f"  Account ID: {account.account_id}, Type: {type(account).__name__}, Balance: {format_currency(account.balance)}"
+        )
+
+def main():
+    clear_screen()
+    # Create user and accounts
+    # setup_user()
+
+    # ask user to where user want to deduct emi from current or savings account
+    while True:
+        try:
+            setup_user()
+            break
+        except Exception as e:
+            print(f"Error during setup: {e}")
+            retry = input("\nDo you want to try setting up again? (y/n): ").strip().lower()
+            if retry == "n" or retry == "N":
+                print("\nThank you for using Personal Finance Management System. Goodbye!")
+                sys.exit(0)
+        except KeyboardInterrupt as e:
+            print("\nThank you for using Personal Finance Management System. Goodbye!")
+            sys.exit(0)
 
     while True:
         try:
+            clear_screen()
             print("Welcome to Personal Finance Management System")
             print(f"User: {user.name} ({user.user_id})")
             print_menu()
             choice = input("Enter your choice (1-7): ").strip()
 
-            if choice == "1":
-                view_all_accounts(user)
-            elif choice == "2":
-                deposit_to_account(user)
-            elif choice == "3":
-                withdraw_from_account(user)
-            elif choice == "4":
-                view_statement(user)
-            elif choice == "5":
-                apply_monthly_updates(user)
-            elif choice == "6":
-                view_financial_report(user)
-            elif choice == "7":
+            choice_actions = {
+                "1": lambda: view_all_accounts(user),
+                "2": lambda: deposit_to_account(user),
+                "3": lambda: withdraw_from_account(user),
+                "4": lambda: view_statement(user),
+                "5": lambda: apply_monthly_updates(user),
+                "6": lambda: view_financial_report(user),
+            }
+            
+            # uses dynamic menu handling to avoid long if-elif chains and allow easy extension of features in future
+            if choice == str(int(list(choice_actions.keys())[-1]) + 1):
                 print("Thank you for using Personal Finance Management System. Goodbye!")
                 break
+            elif choice in choice_actions:
+                choice_actions[choice]()
             else:
                 print("Invalid choice. Please enter a number between 1 and 7.")
         except KeyboardInterrupt:
-            print("\nExiting...")
+            print("\nThank you for using Personal Finance Management System. Goodbye!")
             break
-        # except Exception as e:
-        #     print(f"Unexpected error: {e}")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":

@@ -40,6 +40,7 @@ class User:
         if account_id not in self._accounts:
             raise AccountNotFoundError(f"Account with ID {account_id} not found for user {self.user_id}")
         return self._accounts[account_id]
+    
     def get_all_accounts(self):
         return list(self._accounts.values())
 
@@ -72,6 +73,7 @@ class User:
                 account.apply_monthly_update()
             except Exception as e:
                 errors.append(str(e))
+                print(f"Error applying monthly update for account {account.account_id}: {e}")
         return errors
 
     def __repr__(self):

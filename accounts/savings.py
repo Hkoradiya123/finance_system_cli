@@ -7,6 +7,7 @@
 
 from exceptions import InsufficientFundsError
 from account import Account
+from transaction import Transaction
 # from user import User
 # import user
 
@@ -31,8 +32,10 @@ class SavingsAccount(Account):
 
     def apply_monthly_update(self):
         monthly_interest = self.balance * self.interest_rate / 12 / 100
-        self.balance += monthly_interest
-        self.add_transaction(monthly_interest, "interest")
+        if self.balance > 0:
+            self.balance += monthly_interest
+            transaction = Transaction.create(monthly_interest, "credit", "Monthly interest", tags=["interest"])
+            self.history.append(transaction)
 
     def withdraw(self, amount):
         if self.balance - amount < 1000:

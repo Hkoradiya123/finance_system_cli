@@ -37,6 +37,16 @@ class Account(abc.ABC,Transaction):
     def balance(self):
         return self.__balance
 
+    @balance.setter
+    def systemBalance(self, amount):
+        self.__balance = amount
+
+
+    @balance.setter
+    def balance(self, amount):
+        self.validate_amount(amount)
+        self.__balance = amount
+
     @abc.abstractmethod
     def apply_monthly_update(self):
         pass
@@ -60,14 +70,18 @@ class Account(abc.ABC,Transaction):
         self.validate_amount(amount)
         if amount > self.__balance:
             raise InsufficientFundsError("Insufficient funds for this withdrawal.")
+        tags =  input("Enter a tag for this withdrawal (e.g., groceries, bills, etc.): ")
+
+        tags = set(s.strip() for s in tags.split(",")) if tags!= "" else ""
+
         self.__balance -= amount
-        transaction = Transaction(amount, 'debit', 'Withdrawal')
+        transaction = Transaction(amount, 'debit', 'Withdrawal', tags=tags)
         self.history.append(transaction)
 
-    def get_statement(self, month: int, monthend: int=None):
-        if monthend is not None:
-            return [t for t in self.history if int(t.timestamp[5:7]) >= month and int(t.timestamp[5:7]) <= monthend]
-        return [t for t in self.history if int(t.timestamp[5:7]) == month]
+    def get_statement(self, month: int = None):
+        if month is not None:
+            return [t for t in self.history if int(t.timestamp[5:7]) == month]
+        return self.history
 
     def get_summary(self) -> tuple:
         summary = namedtuple('Summary', ['account_id', 'account_type', 'balance', 'total_transactions'])
@@ -76,3 +90,26 @@ class Account(abc.ABC,Transaction):
     def add_transaction(self, amount: float, transaction_type: str, tags=None):
         transaction = Transaction(amount, transaction_type, tags=tags)
         self.history.append(transaction)    
+
+    def loan_penalty(self,emi_amount, penalty_rate = 0.02):
+        self.validate_amount(emi_amount)
+        penalty_amount = emi_amount * penalty_rate
+        self.validate_amount(penalty_amount)
+        self.systemBalance = self.systemBalance - penalty_amount
+        transaction = Transaction(penalty_amount, 'debit', 'Loan emi with penalty', tags=['penalty'])
+        self.history.append(transaction)
+
+    def loan_monthly_update(self, emi_amount: float, interest_amount: float):
+        self.validate_amount(emi_amount)
+        self.validate_amount(interest_amount)
+        if self.balance < emi_amount:
+            self.loan_penalty(emi_amount)
+        else:
+            self.systemBalance = self.systemBalance - emi_amount
+            transaction = Transaction(
+                emi_amount,
+                'debit',
+                'Loan EMI payment',
+                tags=['emi']
+            )
+            self.history.append(transaction)
