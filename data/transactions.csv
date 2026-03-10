@@ -1,1 +1,2 @@
 transaction_id,amount,type,description,timestamp,tags
+1,1000,credit,Deposit,2026-03-10T09:49:23,

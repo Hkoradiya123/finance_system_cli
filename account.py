@@ -24,7 +24,7 @@ from exceptions import InsufficientFundsError, InvalidAmountError, AccountNotFou
 # from utils import format_currency 
 
 
-class Account(abc.ABC,Transaction):
+class Account(abc.ABC):
     _total_accounts = 0
 
     def __init__(self,User_id,balance: float = 0):
