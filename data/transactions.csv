@@ -1,4 +1,1 @@
 transaction_id,amount,type,description,timestamp,tags
-1,15000.0,debit,Withdrawal,2026-03-10T13:00:37,all
-2,1000.0,credit,Deposit,2026-03-10T13:00:52,
-3,2000.0,debit,Withdrawal,2026-03-10T13:01:12,loan
