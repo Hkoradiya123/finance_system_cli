@@ -19,7 +19,7 @@ class LoanAccount(Account):
         self.remaining_months = remaining_months
         self.emi_amount = principal / remaining_months
         self.interest_rate = 7.0
-        self.systemBalance = -principal  # Outstanding balance
+        self._set_balance(-principal)  # Outstanding balance
 
     def deposit(self, amount):
         raise UnauthorizedAccessError("Cannot deposit to a loan account.")
@@ -38,7 +38,7 @@ class LoanAccount(Account):
                         self.emi_amount, interest_amount
                     )
                     self.remaining_months -= 1
-                    self.systemBalance += self.emi_amount
+                    self._set_balance(self.balance + self.emi_amount)
                     transaction = Transaction.create(
                         self.emi_amount, "loan", "EMI payment", tags=["emi"]
                     )

@@ -1,4 +1,15 @@
 transaction_id,amount,type,description,timestamp,tags
-1,15000.0,debit,Withdrawal,2026-03-10T13:00:37,all
-2,1000.0,credit,Deposit,2026-03-10T13:00:52,
-3,2000.0,debit,Withdrawal,2026-03-10T13:01:12,loan
+1,200.0,debit,Monthly fee,2026-03-10T09:51:21,fee
+2,500,debit,Withdrawal,2026-03-10T09:51:21,bills
+3,500,credit,Deposit,2026-03-10T09:51:21,
+4,100,credit,Deposit,2026-03-10T09:51:21,
+5,100,credit,Deposit,2026-03-10T09:51:21,
+6,200,credit,Deposit,2026-03-10T09:51:21,
+7,100,credit,Jan,2026-01-15T10:00:00,
+8,200,credit,Mar,2026-03-10T10:00:00,
+9,1000.0,debit,Loan EMI payment,2026-03-10T09:51:21,emi
+10,1000.0,loan,EMI payment,2026-03-10T09:51:21,emi
+11,45.0,credit,Monthly interest,2026-03-10T09:51:21,interest
+12,500,debit,Withdrawal,2026-03-10T09:51:21,groceries
+13,11.25,credit,Monthly interest,2026-03-10T09:51:21,interest
+14,200.0,debit,Monthly fee,2026-03-10T09:51:21,fee

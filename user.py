@@ -60,7 +60,7 @@ class User:
         total = self.total_balance()
         for account in self._accounts.values():
             if isinstance(account, LoanAccount):
-                total -= account._Account__balance
+                total += account._Account__balance  # balance is already negative (outstanding debt)
         return total
 
     def get_all_summaries(self):
