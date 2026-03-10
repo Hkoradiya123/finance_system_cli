@@ -14,8 +14,8 @@ from transaction import Transaction
 
 class SavingsAccount(Account):
 
-    def __init__(self, user_id, balance: float = 0.0):
-        super().__init__( user_id, balance)
+    def __init__(self, user_id, balance: float = 0.0, account_pin:int = 0000):
+        super().__init__( user_id, balance, account_pin=account_pin)
         self.account_type = "Savings"
         self.interest_rate = 4.5  
         self.monthly_fee = 200.0

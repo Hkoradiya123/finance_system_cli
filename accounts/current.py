@@ -12,8 +12,8 @@ from transaction import Transaction
 
 
 class CurrentAccount(Account):
-    def __init__(self,user_id, balance: float = 0.0):
-        super().__init__( user_id, balance)
+    def __init__(self,user_id, balance: float = 0.0, account_pin:int = 0000):
+        super().__init__( user_id, balance, account_pin=account_pin)
         self.account_type = 'Current'
         self.interest_rate = 0.0 
         self.monthly_fee = 200.0 
@@ -41,8 +41,11 @@ class CurrentAccount(Account):
             raise InsufficientFundsError(
                 f"Overdraft limit exceeded. Available: Rs. {self.balance + self.overdraft_limit}"
             )
-
-        tags = input("Enter a tag for this withdrawal (e.g., groceries, bills, etc.): ")
+        pin = int(input("\nEnter your 4-digit PIN to confirm withdrawal: ").strip())
+        if not self.check_pin(pin):
+            raise UnauthorizedAccessError("\nInvalid PIN...")
+        
+        tags = input("\nEnter a tag for this withdrawal (e.g., groceries, bills, etc.): ")
         tags = set(s.strip() for s in tags.split(",")) if tags != "" else ""
 
         self.systemBalance = self.balance - amount

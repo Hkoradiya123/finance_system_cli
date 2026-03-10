@@ -27,12 +27,14 @@ from exceptions import InsufficientFundsError, InvalidAmountError, AccountNotFou
 class Account(abc.ABC,Transaction):
     _total_accounts = 0
 
-    def __init__(self,User_id,balance: float = 0):
+    def __init__(self, User_id, balance: float = 0, account_pin:int = 0000):
         Account._total_accounts += 1
         self.account_id = Account._total_accounts
         self.owner = User_id
         self.__balance = balance
         self.history = []
+        self.__accountPin = account_pin
+
 
     @property
     def balance(self):
@@ -59,6 +61,32 @@ class Account(abc.ABC,Transaction):
     def validate_amount(amount):
         if amount < 0:
             raise InvalidAmountError("Amount must be a positive number.")   
+        
+    @property
+    def accountPin(self):
+        return self.__accountPin
+    
+    @accountPin.setter
+    def accountPin(self, pin):
+        self.__accountPin = pin
+
+
+    def setAccountPin(self):
+        while True:
+            try:
+                pin = int(input("Enter a valid 4-digit PIN: ").strip())
+                self.accountPin = pin
+                if len(str(pin)) == 4:
+                    print("\npin set successfully...")
+                    break
+                else:
+                    raise ValueError("PIN must be a 4-digit number.")
+            except ValueError as e:
+                print(e)
+
+    def check_pin(self, pin):
+        return self.accountPin == pin
+
 
     def deposit(self, amount):
         self.validate_amount(amount)
@@ -70,13 +98,25 @@ class Account(abc.ABC,Transaction):
         self.validate_amount(amount)
         if amount > self.balance:
             raise InsufficientFundsError("Insufficient funds for this withdrawal.")
-        tags =  input("Enter a tag for this withdrawal (e.g., groceries, bills, etc.): ")
-
+        
+        while True:
+            try:
+                pin = int(input("\nEnter your 4-digit PIN to confirm withdrawal: ").strip())
+                if len(str(pin)) == 4:
+                    if not self.check_pin(pin):
+                        raise UnauthorizedAccessError("\nInvalid PIN...")
+                    break
+                else:
+                    raise ValueError("PIN must be a 4-digit number.")
+            except ValueError as e:
+                print(e)
+        
+        tags =  input("\nEnter a tag for this withdrawal (e.g., groceries, bills, etc.): ")
         tags = set(s.strip() for s in tags.split(",")) if tags!= "" else ""
-
         self.balance -= amount
         transaction = Transaction(amount, 'debit', 'Withdrawal', tags=tags)
         self.history.append(transaction)
+
     def get_statement(self, month: int = None):
         if month is not None:
             return [t for t in self.history if int(t.timestamp[5:7]) == month]

@@ -78,19 +78,17 @@ def deposit_to_account(user:User):
 
         account = user.get_account(account_id)
         if isinstance(account, LoanAccount):
-            print("Error: Cannot deposit to a Loan Account.")
+            print("\nError: Cannot deposit to a Loan Account.")
             return
         account.deposit(amount)
-        print(
-            f"Successfully deposited {format_currency(amount)} to account {account_id}"
-        )
+        print(f"\nSuccessfully deposited {format_currency(amount)} to account {account_id}")
         print(f"New balance: {format_currency(account.balance)}")
     except ValueError:
-        print("Error: Invalid input. Please enter a valid amount.")
+        print("\nError: Invalid input. Please enter a valid amount.")
     except FinanceException as e:
-        print(f"Error: {e}")
+        print(f"\nError: {e}")
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        print(f"\nUnexpected error: {e}")
 
 @clear_wait
 def withdraw_from_account(user:User):
@@ -100,18 +98,16 @@ def withdraw_from_account(user:User):
 
         account = user.get_account(account_id)
         account.withdraw(amount)
-        print(
-            f"\nSuccessfully withdrew {format_currency(amount)} from account {account_id}"
-        )
-        print(f"\nNew balance: {format_currency(account.balance)}")
+        print(f"\nSuccessfully withdrew {format_currency(amount)} from account {account_id}")
+        print(f"New balance: {format_currency(account.balance)}")
     except ValueError:
-        print("Error: Invalid input. Please enter a valid amount.")
+        print("\nError: Invalid input. Please enter a valid amount.")
     except InsufficientFundsError as e:
-        print(f"Error: {e}")
+        print(f"\nError: {e}")
     except FinanceException as e:
-        print(f"Error: {e}")
+        print(f"\nError: {e}")
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        print(f"\nUnexpected error: {e}")
 
 @clear_wait
 def view_statement(user:User):
@@ -131,7 +127,7 @@ def view_statement(user:User):
 
         transactions = account.get_statement(month)
         if not transactions:
-            print("No transactions found.")
+            print("\nNo transactions found.")
             return
 
         print("\n" + "-" * 50)
@@ -145,13 +141,13 @@ def view_statement(user:User):
             print(f"  description : {txn['description']}")
             print(f"  tags : {txn['tags']}")
         print("-" * 50)
-        print(f"Total Transactions: {len(transactions)}")
+        print(f"\nTotal Transactions: {len(transactions)}")
     except ValueError:
-        print("Error: Invalid input.")
+        print("\nError: Invalid input.")
     except FinanceException as e:
-        print(f"Error: {e}")
+        print(f"\nError: {e}")
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        print(f"\nUnexpected error: {e}")
 
 @clear_wait
 def apply_monthly_updates(user:User):
@@ -210,12 +206,12 @@ def view_financial_report(user:User):
             print("  No transactions found.")
             
     except KeyError as e:
-        print(f"Error: Missing data in report - {e}")
+        print(f"\nError: Missing data in report - {e}")
         print("Please ensure all accounts have transactions.")
     except TypeError as e:
-        print(f"Error: Data format issue - {e}")
+        print(f"\nError: Data format issue - {e}")
     except Exception as e:
-        print(f"Unexpected error generating report: {e}")
+        print(f"\nUnexpected error generating report: {e}")
 
 
 @clear_wait
@@ -223,25 +219,27 @@ def setup_user():
 
     global user
 
-    print("Let's set up your account!\n")
+    print("Let's set up your account!")
+    print()
     name = input("Enter your name: ").strip()
     email = input("Enter your email: ").strip()
     user = User("U001", name, email)
 
-    print(
-        f"\nWelcome, {user.name}! Your user ID is {user.user_id}. Let's create some accounts for you."
-    )
+    print(f"\nWelcome, {user.name}! Your user ID is {user.user_id}. Let's create some accounts for you.")
 
     print("\nCreating accounts...")
-
-    savingsamount = float(input("Enter initial balance for Savings Account: ").strip())
-    currentamount = float(input("Enter initial balance for Current Account: ").strip())
-
     global savings
     global current
 
+    print()
+    savingsamount = float(input("Enter initial balance for Savings Account: ").strip())
     savings = SavingsAccount(user.user_id, savingsamount)
+    savings.setAccountPin()
+
+    print()
+    currentamount = float(input("Enter initial balance for Current Account: ").strip())
     current = CurrentAccount(user.user_id, balance=currentamount)
+    current.setAccountPin()
 
     user.add_account(savings)
     user.add_account(current)
@@ -249,8 +247,7 @@ def setup_user():
     loan_choice = input("\nDo you want to set up a loan account? (y/n): ").strip().lower()
     if loan_choice == "y" or loan_choice == "Y":
         print("\nSetting up loan account...")
-
-
+        print()
         loadamount = float(input("Enter principal amount for Loan Account: ").strip())
         loanmonths = int(input("Enter remaining months for Loan Account: ").strip())
 
@@ -273,17 +270,15 @@ def setup_user():
                 )  # validates ID exists
 
                 if isinstance(emi_account, LoanAccount):
-                    print(
-                        "Loan account cannot be used for EMI deduction. Choose Savings/Current."
-                    )
+                    print("\nLoan account cannot be used for EMI deduction. Choose Savings/Current.")
                     continue
 
                 linkedBankAccount = emi_account
                 break
             except ValueError:
-                print("Please enter a valid numeric account number.")
+                print("\nPlease enter a valid numeric account number.")
             except AccountNotFoundError:
-                print("Invalid account number. Try again.")
+                print("\nInvalid account number. Try again.")
 
         loan = LoanAccount(
             user.user_id,
@@ -293,8 +288,8 @@ def setup_user():
         )
         user.add_account(loan)
 
-    print("\nAll Accounts created successfully!\n")
-    # Display all accounts
+    print("\nAll Accounts created successfully!")
+    print()
     print("All accounts:")
     for account in user.get_all_accounts():
         print(
@@ -312,7 +307,7 @@ def main():
             setup_user()
             break
         except Exception as e:
-            print(f"Error during setup: {e}")
+            print(f"\nError during setup: {e}")
             retry = input("\nDo you want to try setting up again? (y/n): ").strip().lower()
             if retry == "n" or retry == "N":
                 print("\nThank you for using Personal Finance Management System. Goodbye!")
@@ -324,10 +319,10 @@ def main():
     while True:
         try:
             clear_screen()
-            print("Welcome to Personal Finance Management System")
+            print("\nWelcome to Personal Finance Management System")
             print(f"User: {user.name} ({user.user_id})")
             print_menu()
-            choice = input("Enter your choice (1-7): ").strip()
+            choice = input("\nEnter your choice (1-7): ").strip()
 
             choice_actions = {
                 "1": lambda: view_all_accounts(user),
@@ -340,17 +335,17 @@ def main():
             
             # uses dynamic menu handling to avoid long if-elif chains and allow easy extension of features in future
             if choice == str(int(list(choice_actions.keys())[-1]) + 1):
-                print("Thank you for using Personal Finance Management System. Goodbye!")
+                print("\nThank you for using Personal Finance Management System. Goodbye!")
                 break
             elif choice in choice_actions:
                 choice_actions[choice]()
             else:
-                print("Invalid choice. Please enter a number between 1 and 7.")
+                print("\nInvalid choice. Please enter a number between 1 and 7.")
         except KeyboardInterrupt:
             print("\nThank you for using Personal Finance Management System. Goodbye!")
             break
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            print(f"\nUnexpected error: {e}")
 
 
 if __name__ == "__main__":
