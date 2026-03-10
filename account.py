@@ -24,7 +24,7 @@ from exceptions import InsufficientFundsError, InvalidAmountError, AccountNotFou
 # from utils import format_currency 
 
 
-class Account(abc.ABC,Transaction):
+class Account(abc.ABC):
     _total_accounts = 0
 
     def __init__(self,User_id,balance: float = 0):
@@ -39,12 +39,12 @@ class Account(abc.ABC,Transaction):
         return self.__balance
 
     @balance.setter
-    def systemBalance(self, amount):
-        self.__balance = amount
-
-    @balance.setter
     def balance(self, amount):
         self.validate_amount(amount)
+        self.__balance = amount
+
+    def _set_balance(self, amount):
+        """Set balance directly without validation (for internal/system use)."""
         self.__balance = amount
 
     @abc.abstractmethod
@@ -57,12 +57,14 @@ class Account(abc.ABC,Transaction):
 
     @staticmethod
     def validate_amount(amount):
-        if amount < 0:
-            raise InvalidAmountError("Amount must be a positive number.")   
+        if not isinstance(amount, (int, float)):
+            raise InvalidAmountError("Amount must be a number.")
+        if amount <= 0:
+            raise InvalidAmountError("Amount must be a positive number.")
 
     def deposit(self, amount):
         self.validate_amount(amount)
-        self.balance += amount
+        self._set_balance(self.balance + amount)
         transaction = Transaction(amount, 'credit', 'Deposit')
         self.history.append(transaction)
 
@@ -72,9 +74,9 @@ class Account(abc.ABC,Transaction):
             raise InsufficientFundsError("Insufficient funds for this withdrawal.")
         tags =  input("Enter a tag for this withdrawal (e.g., groceries, bills, etc.): ")
 
-        tags = set(s.strip() for s in tags.split(",")) if tags!= "" else ""
+        tags = set(s.strip() for s in tags.split(",")) if tags!= "" else set()
 
-        self.balance -= amount
+        self._set_balance(self.balance - amount)
         transaction = Transaction(amount, 'debit', 'Withdrawal', tags=tags)
         self.history.append(transaction)
     def get_statement(self, month: int = None):
@@ -99,7 +101,7 @@ class Account(abc.ABC,Transaction):
         self.validate_amount(emi_amount)
         penalty_amount = emi_amount * penalty_rate
         self.validate_amount(penalty_amount)
-        self.systemBalance = self.systemBalance - penalty_amount
+        self._set_balance(self.balance - penalty_amount)
         transaction = Transaction(penalty_amount, 'debit', 'Loan emi with penalty', tags=['penalty'])
         self.history.append(transaction)
 
@@ -109,7 +111,7 @@ class Account(abc.ABC,Transaction):
         if self.balance < emi_amount:
             self.loan_penalty(emi_amount)
         else:
-            self.systemBalance = self.systemBalance - emi_amount
+            self._set_balance(self.balance - emi_amount)
             transaction = Transaction(
                 emi_amount,
                 'debit',
@@ -117,3 +119,11 @@ class Account(abc.ABC,Transaction):
                 tags=['emi']
             )
             self.history.append(transaction)
+
+    def __str__(self):
+        return f"Account(id={self.account_id}, type={self.get_account_type()}, balance={self.balance}, owner={self.owner})"
+
+    def __eq__(self, other):
+        if not isinstance(other, Account):
+            return NotImplemented
+        return self.account_id == other.account_id
