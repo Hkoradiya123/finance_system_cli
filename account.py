@@ -75,7 +75,7 @@ class Account(abc.ABC,Transaction):
         tags = set(s.strip() for s in tags.split(",")) if tags!= "" else ""
 
         self.balance -= amount
-        transaction = Transaction(amount, 'debit', 'Withdrawal', tags=tags)
+        transaction = Transaction(amount, 'debit', 'Withdrawal', tags=tags) 
         self.history.append(transaction)
     def get_statement(self, month: int = None):
         if month is not None:
