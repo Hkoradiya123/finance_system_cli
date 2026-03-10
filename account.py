@@ -24,7 +24,7 @@ from exceptions import InsufficientFundsError, InvalidAmountError, AccountNotFou
 # from utils import format_currency 
 
 
-class Account(abc.ABC,Transaction):
+class Account(abc.ABC):
     _total_accounts = 0
 
     def __init__(self,User_id,balance: float = 0):
@@ -75,7 +75,7 @@ class Account(abc.ABC,Transaction):
         tags = set(s.strip() for s in tags.split(",")) if tags!= "" else ""
 
         self.balance -= amount
-        transaction = Transaction(amount, 'debit', 'Withdrawal', tags=tags)
+        transaction = Transaction(amount, 'debit', 'Withdrawal', tags=tags) 
         self.history.append(transaction)
     def get_statement(self, month: int = None):
         if month is not None:

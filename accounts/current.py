@@ -1,4 +1,4 @@
-1#!  Additional attributes: monthly_fee (e.g., Rs. 200) and overdraft_limit (e.g., Rs. 5000).
+#!  Additional attributes: monthly_fee (e.g., Rs. 200) and overdraft_limit (e.g., Rs. 5000).
 #! • apply_monthly_update(): Deduct monthly fee. Record as debit with tag 'fee'.
 #! • get_account_type() returns 'Current'.
 #! • Override withdraw() to allow overdraft up to overdraft_limit. Raise InsufficientFundsError only if overdraft

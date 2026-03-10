@@ -23,11 +23,10 @@ def format_currency(amount: float) -> str:
 
         pairs = []
         while remaining:
-            pairs.append(remaining[0:2])
-            remaining = remaining[3:]
+            pairs.append(remaining[-2:])
+            remaining = remaining[:-2]
 
-        # # Reverse and join
-        # pairs.reverse()
+        pairs.reverse()
 
         formatted = ",".join(pairs) + "," + last_three
     result = f"{symbol}{formatted}.{decimal_part}"
@@ -106,7 +105,8 @@ def load_transactions_from_file(filename):
 
     return transactions
 
-print("Loading transactions from file...\n")
-print(load_transactions_from_file("data\\transactions.csv"))
+if __name__ == "__main__":
+    print("Loading transactions from file...\n")
+    print(load_transactions_from_file("data\\transactions.csv"))
 
 
