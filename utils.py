@@ -1,7 +1,7 @@
 import sys
 
 
-def format_currency(amount):
+def format_currency(amount: float) -> str:
     symbol = "Rs. "
 
     if amount < 0:

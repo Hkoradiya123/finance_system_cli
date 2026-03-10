@@ -1,13 +1,4 @@
 transaction_id,amount,type,description,timestamp,tags
-1,4629.62625,credit,Monthly interest,2026-03-09T15:31:38,interest
-2,200.0,debit,Monthly fee,2026-03-09T15:31:38,fee
-3,308.5,debit,Loan EMI payment,2026-03-09T15:31:38,emi
-4,308.5,loan,EMI payment,2026-03-09T15:31:38,emi
-5,4645.830473437501,credit,Monthly interest,2026-03-09T15:31:40,interest
-6,200.0,debit,Monthly fee,2026-03-09T15:31:40,fee
-7,308.5,debit,Loan EMI payment,2026-03-09T15:31:40,emi
-8,308.5,loan,EMI payment,2026-03-09T15:31:40,emi
-9,4662.09546271289,credit,Monthly interest,2026-03-09T15:31:41,interest
-10,200.0,debit,Monthly fee,2026-03-09T15:31:41,fee
-11,308.5,debit,Loan EMI payment,2026-03-09T15:31:41,emi
-12,308.5,loan,EMI payment,2026-03-09T15:31:41,emi
+1,15000.0,debit,Withdrawal,2026-03-10T13:00:37,all
+2,1000.0,credit,Deposit,2026-03-10T13:00:52,
+3,2000.0,debit,Withdrawal,2026-03-10T13:01:12,loan

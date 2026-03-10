@@ -21,6 +21,7 @@ from collections import namedtuple
 from transaction import Transaction
 # from user import User
 from exceptions import InsufficientFundsError, InvalidAmountError, AccountNotFoundError, UnauthorizedAccessError
+# from utils import format_currency 
 
 
 class Account(abc.ABC,Transaction):
@@ -41,7 +42,6 @@ class Account(abc.ABC,Transaction):
     def systemBalance(self, amount):
         self.__balance = amount
 
-
     @balance.setter
     def balance(self, amount):
         self.validate_amount(amount)
@@ -57,27 +57,26 @@ class Account(abc.ABC,Transaction):
 
     @staticmethod
     def validate_amount(amount):
-        if amount <= 0:
+        if amount < 0:
             raise InvalidAmountError("Amount must be a positive number.")   
 
     def deposit(self, amount):
         self.validate_amount(amount)
-        self.__balance += amount
+        self.balance += amount
         transaction = Transaction(amount, 'credit', 'Deposit')
         self.history.append(transaction)
 
     def withdraw(self, amount):
         self.validate_amount(amount)
-        if amount > self.__balance:
+        if amount > self.balance:
             raise InsufficientFundsError("Insufficient funds for this withdrawal.")
         tags =  input("Enter a tag for this withdrawal (e.g., groceries, bills, etc.): ")
 
         tags = set(s.strip() for s in tags.split(",")) if tags!= "" else ""
 
-        self.__balance -= amount
+        self.balance -= amount
         transaction = Transaction(amount, 'debit', 'Withdrawal', tags=tags)
         self.history.append(transaction)
-
     def get_statement(self, month: int = None):
         if month is not None:
             return [t for t in self.history if int(t.timestamp[5:7]) == month]
@@ -85,7 +84,12 @@ class Account(abc.ABC,Transaction):
 
     def get_summary(self) -> tuple:
         summary = namedtuple('Summary', ['account_id', 'account_type', 'balance', 'total_transactions'])
-        return summary(self.account_id, self.get_account_type(), self.balance, len(self.history)) 
+        return summary(
+            self.account_id,
+            self.get_account_type(),
+            self.balance,
+            len(self.history),
+        )
 
     def add_transaction(self, amount: float, transaction_type: str, tags=None):
         transaction = Transaction(amount, transaction_type, tags=tags)

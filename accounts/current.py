@@ -1,4 +1,3 @@
-
 1#!  Additional attributes: monthly_fee (e.g., Rs. 200) and overdraft_limit (e.g., Rs. 5000).
 #! • apply_monthly_update(): Deduct monthly fee. Record as debit with tag 'fee'.
 #! • get_account_type() returns 'Current'.
@@ -34,3 +33,18 @@ class CurrentAccount(Account):
         elif self.balance < self.monthly_fee:
             errors.append("Insufficient funds to cover the monthly fee.")
         return errors
+
+    def withdraw(self, amount):
+        self.validate_amount(amount)
+
+        if amount > self.balance + self.overdraft_limit:
+            raise InsufficientFundsError(
+                f"Overdraft limit exceeded. Available: Rs. {self.balance + self.overdraft_limit}"
+            )
+
+        tags = input("Enter a tag for this withdrawal (e.g., groceries, bills, etc.): ")
+        tags = set(s.strip() for s in tags.split(",")) if tags != "" else ""
+
+        self.systemBalance = self.balance - amount
+        transaction = Transaction(amount, "debit", "Withdrawal", tags=tags)
+        self.history.append(transaction)

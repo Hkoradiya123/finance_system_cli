@@ -38,6 +38,8 @@ class SavingsAccount(Account):
             self.history.append(transaction)
 
     def withdraw(self, amount):
+        if amount > self.balance:
+            raise InsufficientFundsError("Insufficient funds for this withdrawal.")
         if self.balance - amount < 1000:
             raise InsufficientFundsError("Withdrawal would breach minimum balance of Rs. 1000.")
         super().withdraw(amount)
